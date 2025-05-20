@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">Barangay Bulletin</string>
+    <string name="app_description">A local announcement and event tracker</string>
+    <string name="app_logo">App Logo</string>
+    <string name="login_as_admin">Login as Admin</string>
+    <string name="continue_as_guest">Continue as Guest</string>
+    <string name="admin_description">For barangay officials to manage announcements</string>
+    <string name="guest_description">For residents to view announcements and events</string>
+    <string name="admin_icon">Admin Icon</string>
+    <string name="guest_icon">Guest Icon</string>
+
+    <string name="back">Back</string>
+    <string name="admin_login">Admin Login</string>
+    <string name="admin_login_subtitle">Log in to manage announcements and events</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="login">Login</string>
+    <string name="register_as_admin">Register as Admin</string>
+
+    <string name="admin_register">Admin Registration</string>
+    <string name="admin_register_subtitle">Create an admin account</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="register">Register</string>
+    <string name="already_have_account_login">Already have an account? Login</string>
+
+
+    <string name="firebase_storage_bucket">your-app-name.appspot.com</string>
+</resources>

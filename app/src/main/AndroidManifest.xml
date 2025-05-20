@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Required permissions -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.BarangayBulletin"
+        android:requestLegacyExternalStorage="true"
+        tools:targetApi="31">
+
+        <!-- Firebase Meta-data -->
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+        <meta-data
+            android:name="firebase_storage_bucket"
+            android:value="@string/firebase_storage_bucket" />
+
+        <!-- File Provider -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
+
+        <!-- Main entry point -->
+        <activity
+            android:name=".UserSelectionActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Admin Login Activity -->
+        <activity
+            android:name=".AdminLoginActivity"
+            android:exported="false"
+            android:parentActivityName=".UserSelectionActivity">
+            <meta-data
+                android:name="android.activity.transition.enter"
+                android:value="@android:anim/fade_in" />
+            <meta-data
+                android:name="android.activity.transition.exit"
+                android:value="@android:anim/fade_out" />
+        </activity>
+
+        <activity
+            android:name=".UserHomeActivity"
+            android:exported="false"
+            android:parentActivityName=".UserSelectionActivity">
+            <meta-data
+                android:name="android.activity.transition.enter"
+                android:value="@android:anim/fade_in" />
+            <meta-data
+                android:name="android.activity.transition.exit"
+                android:value="@android:anim/fade_out" />
+        </activity>
+
+        <activity
+            android:name=".AdminRegisterActivity"
+            android:exported="false"
+            android:parentActivityName=".UserSelectionActivity">
+            <meta-data
+                android:name="android:activity.transition.enter"
+                android:value="@android:anim/fade_in" />
+            <meta-data
+                android:name="android:activity.transition.exit"
+                android:value="@android:anim/fade_out" />
+        </activity>
+
+        <activity
+            android:name=".AdminHomeActivity"
+            android:exported="false"
+            android:parentActivityName=".AdminLoginActivity">
+            <meta-data
+                android:name="android:activity.transition.enter"
+                android:value="@android:anim/fade_in" />
+            <meta-data
+                android:name="android:activity.transition.exit"
+                android:value="@android:anim/fade_out" />
+        </activity>
+
+    </application>
+
+</manifest>

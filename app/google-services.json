@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "560960775480",
+    "project_id": "barangay-bulletin-app",
+    "storage_bucket": "barangay-bulletin-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:560960775480:android:6c4db551706591e8f8cdcd",
+        "android_client_info": {
+          "package_name": "com.example.barangaybulletin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBps2wlkYAYecDJjiO-Z3JxKv6q16n-bpo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:560960775480:android:f4532c640f70a6a9f8cdcd",
+        "android_client_info": {
+          "package_name": "com.example.barangaybulletinloringlayouts"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBps2wlkYAYecDJjiO-Z3JxKv6q16n-bpo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
