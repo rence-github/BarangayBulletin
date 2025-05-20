@@ -48,6 +48,9 @@ dependencies {
     implementation 'androidx.navigation:navigation-fragment:2.8.6'
     implementation 'androidx.navigation:navigation-ui:2.8.6'
 
+    // Add SwipeRefreshLayout dependency
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+
     // Firebase dependencies
     implementation 'com.google.firebase:firebase-auth:22.3.1'
     implementation 'com.google.firebase:firebase-firestore:24.10.1'

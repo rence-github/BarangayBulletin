@@ -35,7 +35,7 @@ public class AnnouncementUserAdapter extends RecyclerView.Adapter<AnnouncementUs
 
     private static final String TAG = "AnnouncementAdapter";
     private List<Announcement> announcementList;
-    private final Executor executor = Executors.newSingleThreadExecutor();
+    private final Executor executor = Executors.newFixedThreadPool(3); // Create a thread pool instead of single thread
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final RequestOptions glideOptions = new RequestOptions()
             .diskCacheStrategy(DiskCacheStrategy.ALL)
@@ -45,6 +45,9 @@ public class AnnouncementUserAdapter extends RecyclerView.Adapter<AnnouncementUs
     private FavoriteClickListener favoriteClickListener;
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+    // Date formatter - create once to avoid creating objects repeatedly
+    private final SimpleDateFormat dateFormatter = new SimpleDateFormat("MMM dd, yyyy hh:mm a", Locale.getDefault());
 
     public interface FavoriteClickListener {
         void onFavoriteUpdated(int position);
@@ -75,18 +78,20 @@ public class AnnouncementUserAdapter extends RecyclerView.Adapter<AnnouncementUs
             holder.tvTitle.setText(announcement.getTitle());
             holder.tvContent.setText(announcement.getContent());
 
-            // Format dates
+            // Format dates - do this on a background thread
             executor.execute(() -> {
-                SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy hh:mm a", Locale.getDefault());
-                String postedDate = "Posted: " + sdf.format(new Date(announcement.getTimestamp()));
+                String postedDate = "Posted: " + dateFormatter.format(new Date(announcement.getTimestamp()));
                 String eventDate = announcement.hasEventDate() ?
-                        "Event Date: " + sdf.format(new Date(announcement.getEventDate())) : null;
+                        "Event Date: " + dateFormatter.format(new Date(announcement.getEventDate())) : null;
 
                 mainHandler.post(() -> {
-                    holder.tvPostedDate.setText(postedDate);
-                    holder.tvEventDate.setVisibility(eventDate != null ? View.VISIBLE : View.GONE);
-                    if (eventDate != null) {
-                        holder.tvEventDate.setText(eventDate);
+                    // Check if this holder is still displaying the same position
+                    if (holder.getAdapterPosition() == position) {
+                        holder.tvPostedDate.setText(postedDate);
+                        holder.tvEventDate.setVisibility(eventDate != null ? View.VISIBLE : View.GONE);
+                        if (eventDate != null) {
+                            holder.tvEventDate.setText(eventDate);
+                        }
                     }
                 });
             });
@@ -97,15 +102,18 @@ public class AnnouncementUserAdapter extends RecyclerView.Adapter<AnnouncementUs
             holder.ivFavorite.setColorFilter(ContextCompat.getColor(holder.itemView.getContext(), colorRes));
 
             holder.ivFavorite.setOnClickListener(v -> {
-                boolean newFavoriteState = !announcement.isFavorite();
-                announcement.setFavorite(newFavoriteState);
-                int newColorRes = newFavoriteState ? R.color.red : R.color.gray;
-                holder.ivFavorite.setColorFilter(ContextCompat.getColor(holder.itemView.getContext(), newColorRes));
+                int adapterPosition = holder.getAdapterPosition();
+                if (adapterPosition != RecyclerView.NO_POSITION) {
+                    boolean newFavoriteState = !announcement.isFavorite();
+                    announcement.setFavorite(newFavoriteState);
+                    int newColorRes = newFavoriteState ? R.color.red : R.color.gray;
+                    holder.ivFavorite.setColorFilter(ContextCompat.getColor(holder.itemView.getContext(), newColorRes));
 
-                updateFavoriteInFirebase(announcement, newFavoriteState);
+                    updateFavoriteInFirebase(announcement, newFavoriteState);
 
-                if (favoriteClickListener != null) {
-                    favoriteClickListener.onFavoriteUpdated(position);
+                    if (favoriteClickListener != null) {
+                        favoriteClickListener.onFavoriteUpdated(adapterPosition);
+                    }
                 }
             });
 
@@ -115,6 +123,10 @@ public class AnnouncementUserAdapter extends RecyclerView.Adapter<AnnouncementUs
                 String imageData = announcement.getImageUrl();
 
                 if (imageData.startsWith("data:image")) {
+                    // Create a tag to track which image this view should display
+                    final int imageRequestTag = position;
+                    holder.ivImage.setTag(imageRequestTag);
+
                     executor.execute(() -> {
                         try {
                             String base64Image = imageData.split(",")[1];
@@ -122,13 +134,20 @@ public class AnnouncementUserAdapter extends RecyclerView.Adapter<AnnouncementUs
                             Bitmap bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
 
                             mainHandler.post(() -> {
-                                if (holder.getAdapterPosition() == position) {
+                                // Only update if this view is still supposed to show this image
+                                if (holder.ivImage.getTag() != null &&
+                                        (int)holder.ivImage.getTag() == imageRequestTag) {
                                     holder.ivImage.setImageBitmap(bitmap);
                                 }
                             });
                         } catch (Exception e) {
                             Log.e(TAG, "Error decoding base64 image", e);
-                            mainHandler.post(() -> holder.ivImage.setVisibility(View.GONE));
+                            mainHandler.post(() -> {
+                                if (holder.ivImage.getTag() != null &&
+                                        (int)holder.ivImage.getTag() == imageRequestTag) {
+                                    holder.ivImage.setVisibility(View.GONE);
+                                }
+                            });
                         }
                     });
                 } else {
@@ -146,19 +165,21 @@ public class AnnouncementUserAdapter extends RecyclerView.Adapter<AnnouncementUs
     }
 
     private void updateFavoriteInFirebase(Announcement announcement, boolean isFavorite) {
-        Map<String, Object> favoriteData = new HashMap<>();
-        favoriteData.put("announcementId", announcement.getId());
-        favoriteData.put("userId", currentUserId);
-        favoriteData.put("timestamp", System.currentTimeMillis());
+        String favoriteId = currentUserId + "_" + announcement.getId();
 
         if (isFavorite) {
+            Map<String, Object> favoriteData = new HashMap<>();
+            favoriteData.put("announcementId", announcement.getId());
+            favoriteData.put("userId", currentUserId);
+            favoriteData.put("timestamp", System.currentTimeMillis());
+
             db.collection("favorites")
-                    .document(currentUserId + "_" + announcement.getId())
+                    .document(favoriteId)
                     .set(favoriteData)
                     .addOnFailureListener(e -> Log.e(TAG, "Error adding favorite", e));
         } else {
             db.collection("favorites")
-                    .document(currentUserId + "_" + announcement.getId())
+                    .document(favoriteId)
                     .delete()
                     .addOnFailureListener(e -> Log.e(TAG, "Error removing favorite", e));
         }
@@ -167,11 +188,6 @@ public class AnnouncementUserAdapter extends RecyclerView.Adapter<AnnouncementUs
     @Override
     public int getItemCount() {
         return announcementList != null ? announcementList.size() : 0;
-    }
-
-    public void updateData(List<Announcement> newList) {
-        this.announcementList = newList;
-        notifyDataSetChanged();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
