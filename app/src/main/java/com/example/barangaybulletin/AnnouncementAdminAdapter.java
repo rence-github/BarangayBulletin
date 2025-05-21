@@ -48,14 +48,18 @@ public class AnnouncementAdminAdapter extends RecyclerView.Adapter<AnnouncementA
         holder.tvContent.setText(announcement.getContent());
 
         // Format and set dates
-        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy hh:mm a", Locale.getDefault());
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+        SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+        SimpleDateFormat fullFormat = new SimpleDateFormat("MMM dd, yyyy hh:mm a", Locale.getDefault());
 
         // Posted date (always visible)
-        holder.tvPostedDate.setText("Posted: " + sdf.format(new Date(announcement.getTimestamp())));
+        holder.tvPostedDate.setText("Posted: " + fullFormat.format(new Date(announcement.getTimestamp())));
 
         // Event date (only visible if set)
         if (announcement.hasEventDate()) {
-            holder.tvEventDate.setText("Event Date: " + sdf.format(new Date(announcement.getEventDate())));
+            String eventDateStr = dateFormat.format(new Date(announcement.getEventDate()));
+            String eventTimeStr = timeFormat.format(new Date(announcement.getEventDate()));
+            holder.tvEventDate.setText("Event: " + eventDateStr + " at " + eventTimeStr);
             holder.tvEventDate.setVisibility(View.VISIBLE);
         } else {
             holder.tvEventDate.setVisibility(View.GONE);

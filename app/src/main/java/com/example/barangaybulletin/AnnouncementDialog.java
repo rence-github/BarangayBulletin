@@ -3,6 +3,7 @@ package com.example.barangaybulletin;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
+import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -30,7 +31,9 @@ import com.google.firebase.storage.StorageReference;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Locale;
 import java.util.UUID;
 
 public class AnnouncementDialog extends DialogFragment {
@@ -45,7 +48,7 @@ public class AnnouncementDialog extends DialogFragment {
 
     private ImageView ivAnnouncement;
     private Button btnSelectImage;
-    private EditText etTitle, etContent, etEventDate;
+    private EditText etTitle, etContent, etEventDate, etEventTime;
     private Uri selectedImageUri;
     private Calendar eventCalendar;
     private String encodedImage = "";
@@ -65,6 +68,11 @@ public class AnnouncementDialog extends DialogFragment {
             announcement = getArguments().getParcelable("announcement");
         }
         eventCalendar = Calendar.getInstance();
+        // Set default time to 12:00 PM
+        eventCalendar.set(Calendar.HOUR_OF_DAY, 12);
+        eventCalendar.set(Calendar.MINUTE, 0);
+        eventCalendar.set(Calendar.SECOND, 0);
+        eventCalendar.set(Calendar.MILLISECOND, 0);
     }
 
     @NonNull
@@ -79,6 +87,7 @@ public class AnnouncementDialog extends DialogFragment {
         etTitle = view.findViewById(R.id.et_title);
         etContent = view.findViewById(R.id.et_content);
         etEventDate = view.findViewById(R.id.et_event_date);
+        etEventTime = view.findViewById(R.id.et_event_time);
 
         if (announcement != null) {
             etTitle.setText(announcement.getTitle());
@@ -99,8 +108,12 @@ public class AnnouncementDialog extends DialogFragment {
 
             if (announcement.hasEventDate()) {
                 eventCalendar.setTimeInMillis(announcement.getEventDate());
-                etEventDate.setText(Utils.formatDate(announcement.getEventDate()));
+                updateDateTimeFields();
+            } else {
+                updateDateTimeFields(); // Show default date/time
             }
+        } else {
+            updateDateTimeFields(); // Show default date/time for new announcements
         }
 
         btnSelectImage.setOnClickListener(v -> openImageChooser());
@@ -108,6 +121,11 @@ public class AnnouncementDialog extends DialogFragment {
         etEventDate.setOnClickListener(v -> showDatePickerDialog());
         etEventDate.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) showDatePickerDialog();
+        });
+
+        etEventTime.setOnClickListener(v -> showTimePickerDialog());
+        etEventTime.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) showTimePickerDialog();
         });
 
         builder.setView(view)
@@ -149,6 +167,14 @@ public class AnnouncementDialog extends DialogFragment {
         return dialog;
     }
 
+    private void updateDateTimeFields() {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+        SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+
+        etEventDate.setText(dateFormat.format(eventCalendar.getTime()));
+        etEventTime.setText(timeFormat.format(eventCalendar.getTime()));
+    }
+
     private void openImageChooser() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("image/*");
@@ -159,8 +185,10 @@ public class AnnouncementDialog extends DialogFragment {
         DatePickerDialog datePickerDialog = new DatePickerDialog(
                 requireContext(),
                 (view, year, month, dayOfMonth) -> {
-                    eventCalendar.set(year, month, dayOfMonth);
-                    etEventDate.setText(Utils.formatDate(eventCalendar.getTimeInMillis()));
+                    eventCalendar.set(Calendar.YEAR, year);
+                    eventCalendar.set(Calendar.MONTH, month);
+                    eventCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                    updateDateTimeFields();
                 },
                 eventCalendar.get(Calendar.YEAR),
                 eventCalendar.get(Calendar.MONTH),
@@ -168,6 +196,22 @@ public class AnnouncementDialog extends DialogFragment {
         );
         datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
         datePickerDialog.show();
+    }
+
+    private void showTimePickerDialog() {
+        TimePickerDialog timePickerDialog = new TimePickerDialog(
+                requireContext(),
+                (view, hourOfDay, minute) -> {
+                    eventCalendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                    eventCalendar.set(Calendar.MINUTE, minute);
+                    eventCalendar.set(Calendar.SECOND, 0);
+                    updateDateTimeFields();
+                },
+                eventCalendar.get(Calendar.HOUR_OF_DAY),
+                eventCalendar.get(Calendar.MINUTE),
+                false // 12-hour format
+        );
+        timePickerDialog.show();
     }
 
     @Override

@@ -15,7 +15,7 @@ public class Announcement implements Parcelable {
 
     public Announcement() {
         this.timestamp = System.currentTimeMillis();
-        this.eventDate = System.currentTimeMillis();
+        this.eventDate = 0; // Initialize to 0 to indicate no event date set
         this.imageUrl = "";
         this.imageBase64 = "";
         this.favorite = false;

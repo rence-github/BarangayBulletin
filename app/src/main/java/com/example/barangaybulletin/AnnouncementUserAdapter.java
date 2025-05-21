@@ -35,7 +35,7 @@ public class AnnouncementUserAdapter extends RecyclerView.Adapter<AnnouncementUs
 
     private static final String TAG = "AnnouncementAdapter";
     private List<Announcement> announcementList;
-    private final Executor executor = Executors.newFixedThreadPool(3); // Create a thread pool instead of single thread
+    private final Executor executor = Executors.newFixedThreadPool(3);
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final RequestOptions glideOptions = new RequestOptions()
             .diskCacheStrategy(DiskCacheStrategy.ALL)
@@ -45,9 +45,6 @@ public class AnnouncementUserAdapter extends RecyclerView.Adapter<AnnouncementUs
     private FavoriteClickListener favoriteClickListener;
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
-    // Date formatter - create once to avoid creating objects repeatedly
-    private final SimpleDateFormat dateFormatter = new SimpleDateFormat("MMM dd, yyyy hh:mm a", Locale.getDefault());
 
     public interface FavoriteClickListener {
         void onFavoriteUpdated(int position);
@@ -80,12 +77,16 @@ public class AnnouncementUserAdapter extends RecyclerView.Adapter<AnnouncementUs
 
             // Format dates - do this on a background thread
             executor.execute(() -> {
-                String postedDate = "Posted: " + dateFormatter.format(new Date(announcement.getTimestamp()));
+                SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+                SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+                SimpleDateFormat fullFormat = new SimpleDateFormat("MMM dd, yyyy hh:mm a", Locale.getDefault());
+
+                String postedDate = "Posted: " + fullFormat.format(new Date(announcement.getTimestamp()));
                 String eventDate = announcement.hasEventDate() ?
-                        "Event Date: " + dateFormatter.format(new Date(announcement.getEventDate())) : null;
+                        "Event: " + dateFormat.format(new Date(announcement.getEventDate())) +
+                                " at " + timeFormat.format(new Date(announcement.getEventDate())) : null;
 
                 mainHandler.post(() -> {
-                    // Check if this holder is still displaying the same position
                     if (holder.getAdapterPosition() == position) {
                         holder.tvPostedDate.setText(postedDate);
                         holder.tvEventDate.setVisibility(eventDate != null ? View.VISIBLE : View.GONE);
@@ -123,7 +124,6 @@ public class AnnouncementUserAdapter extends RecyclerView.Adapter<AnnouncementUs
                 String imageData = announcement.getImageUrl();
 
                 if (imageData.startsWith("data:image")) {
-                    // Create a tag to track which image this view should display
                     final int imageRequestTag = position;
                     holder.ivImage.setTag(imageRequestTag);
 
@@ -134,7 +134,6 @@ public class AnnouncementUserAdapter extends RecyclerView.Adapter<AnnouncementUs
                             Bitmap bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
 
                             mainHandler.post(() -> {
-                                // Only update if this view is still supposed to show this image
                                 if (holder.ivImage.getTag() != null &&
                                         (int)holder.ivImage.getTag() == imageRequestTag) {
                                     holder.ivImage.setImageBitmap(bitmap);
